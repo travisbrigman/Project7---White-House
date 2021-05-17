@@ -13,7 +13,7 @@ class ViewController: UITableViewController {
     var filteredPetitions = [Petition]()
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return petitions.count
+        return filteredPetitions.count
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -68,9 +68,10 @@ class ViewController: UITableViewController {
     func submit(_ query: String) {
         
         let results = petitions.filter{ petition in
-            return petition.body.contains(query)
+            return petition.body.contains(query) || petition.title.contains(query)
         }
         filteredPetitions = results
+        tableView.reloadData()
     
     }
     
