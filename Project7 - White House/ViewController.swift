@@ -46,24 +46,71 @@ class ViewController: UITableViewController {
             urlString = "https://www.hackingwithswift.com/samples/petitions-2.json"
         }
         
+        DispatchQueue.global(qos: .userInitiated).async {
+            if let url = URL(string: urlString) {
+                if let data = try? Data(contentsOf: url) {
+                    self.parse(json: data)
+                    return
+                }
+            }
+            self.showError()
+        }
+
+        
+    }
+ 
+    /*
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        performSelector(inBackground: #selector(fetchJSON), with: nil)
+    }
+    
+    @objc func fetchJSON() {
+        let urlString: String
+        if navigationController?.tabBarItem.tag == 0 {
+            urlString = "https://www.hackingwithswift.com/samples/petitions-1.json"
+        } else {
+            urlString = "https://www.hackingwithswift.com/samples/petitions-2.json"
+        }
         if let url = URL(string: urlString) {
             if let data = try? Data(contentsOf: url) {
                 parse(json: data)
                 return
             }
         }
-        showError()
+        performSelector(onMainThread: #selector(showError), with: nil, waitUntilDone: false)
     }
     
+    func parse(json: Data) {
+        let decoder = JSONDecoder()
+        if let jsonPetitions = try? decoder.decode(Petitions.self, from: json) {
+            petitions = jsonPetitions.results
+            tableView.performSelector(onMainThread: #selector(UITableView.reloadData), with: nil, waitUntilDone: false)
+        } else {
+        performSelector(onMainThread: #selector(showError), with: nil, waitUntilDone: false)
+        }
+    }
+    
+    @objc func showError() {
+        let ac = UIAlertController(title: "Loading error", message: "There was a problem loading the feed; please check your connection and try again.", preferredStyle: .alert)
+        ac.addAction(UIAlertAction(title: "OK", style: .default))
+        present(ac, animated: true)
+    }
+ */
+    
+ 
     func parse(json: Data) {
         let decoder = JSONDecoder()
         
         if let jsonPetitions = try? decoder.decode(Petitions.self, from: json) {
             petitions = jsonPetitions.results
             filteredPetitions = petitions
-            tableView.reloadData()
+            DispatchQueue.main.async {
+                self.tableView.reloadData()
+            }
         }
     }
+ 
     
     func submit(_ query: String) {
         
@@ -72,14 +119,17 @@ class ViewController: UITableViewController {
         }
         filteredPetitions = results
         tableView.reloadData()
-    
     }
+    
     
     func showError() {
-        let ac = UIAlertController(title: "Loading error", message: "There was a problem loading the feed; please check your connection and try again.", preferredStyle: .alert)
-        ac.addAction(UIAlertAction(title: "OK", style: .default))
-        present(ac, animated: true)
+        DispatchQueue.main.async {
+            let ac = UIAlertController(title: "Loading error", message: "There was a problem loading the feed; please check your connection and try again.", preferredStyle: .alert)
+            ac.addAction(UIAlertAction(title: "OK", style: .default))
+            self.present(ac, animated: true)
+        }
     }
+ 
     
     @objc func credits() {
         let message = "We The People API of the Whitehouse"
@@ -88,17 +138,21 @@ class ViewController: UITableViewController {
         present(ac, animated: true)
     }
     
+    
     @objc func filterResults() {
-        let ac = UIAlertController(title: "Enter answer", message: nil, preferredStyle: .alert)
-        ac.addTextField()
-        
-        let submitAction = UIAlertAction(title: "Submit", style: .default) { [weak self, weak ac] action in
-            guard let answer = ac?.textFields?[0].text else { return }
-            self?.submit(answer)
+        DispatchQueue.main.async {
+            let ac = UIAlertController(title: "Enter answer", message: nil, preferredStyle: .alert)
+            ac.addTextField()
+            
+            let submitAction = UIAlertAction(title: "Submit", style: .default) { [weak self, weak ac] action in
+                guard let answer = ac?.textFields?[0].text else { return }
+                self?.submit(answer)
+            }
+            
+            ac.addAction(submitAction)
+            
+            self.present(ac, animated: true)
         }
-        
-        ac.addAction(submitAction)
-        present(ac, animated: true)
     }
 }
 
